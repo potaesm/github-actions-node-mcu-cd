@@ -104,11 +104,8 @@ function getBuildCommand(githubWorkspace = '.', sketchFile = './sketch.ino') {
 	argList.push(
 		arduinoBuilderConstants.buildCache.replace('./', githubWorkspace)
 	);
-	for (const item of arduinoBuilderConstants.prefs.replace(
-		'./',
-		githubWorkspace
-	)) {
-		argList.push(`-prefs=${item}`);
+	for (const item of arduinoBuilderConstants.prefs) {
+		argList.push(`-prefs=${item.replace('./', githubWorkspace)}`);
 	}
 	argList.push('-verbose');
 	argList.push(sketchFile);

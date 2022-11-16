@@ -1,10 +1,10 @@
 name: 'Node MCU Continuous Deployment'
 description: 'Greet someone and record the time'
 inputs:
-  input: # id of input
-    description: 'Who to greet'
+  githubWorkspace: # id of input
+    description: 'GitHub Workspace Directory'
     required: true
-    default: 'World'
+    default: '.'
 outputs:
   time: # id of output
     description: 'The time we greeted you'

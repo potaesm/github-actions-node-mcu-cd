@@ -37964,6 +37964,14 @@ module.exports = require("buffer");
 
 /***/ }),
 
+/***/ 2081:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("child_process");
+
+/***/ }),
+
 /***/ 2057:
 /***/ ((module) => {
 
@@ -38270,7 +38278,49 @@ const github = __nccwpck_require__(5824);
 const express = __nccwpck_require__(9544);
 const localtunnel = __nccwpck_require__(4051);
 const fs = __nccwpck_require__(4686);
+const { exec } = __nccwpck_require__(2081);
 // const mqtt = require('mqtt');
+
+function run(command) {
+	return new Promise((resolve, reject) => {
+		exec(`${command}`, (error, stdout, stderr) => {
+			if (error) {
+				return reject(error.message);
+			}
+			if (stderr) {
+				return reject(stderr);
+			}
+			return resolve(stdout);
+		});
+	});
+}
+
+function build() {
+	return new Promise(async (resolve, reject) => {
+		try {
+			const buildPathExistsPromise = fs.pathExists(
+				arduinoBuilderConstants.buildPath
+			);
+			const buildCacheExistsPromise = fs.pathExists(
+				arduinoBuilderConstants.buildCache
+			);
+			const [buildPathExists, buildCacheExists] = await Promise.all([
+				buildPathExistsPromise,
+				buildCacheExistsPromise
+			]);
+			if (!buildPathExists) {
+				fs.mkdir(arduinoBuilderConstants.buildPath, { recursive: true });
+			}
+			if (!buildCacheExists) {
+				fs.mkdir(arduinoBuilderConstants.buildCache, { recursive: true });
+			}
+			const buildResult = await run(getBuildCommand());
+			return buildResult;
+		} catch (error) {
+			return reject(error);
+		}
+	});
+}
 
 const arduinoBuilderConstants = {
 	arduinoBuilder: './Java/arduino-builder',
@@ -38297,7 +38347,7 @@ const arduinoBuilderConstants = {
 };
 
 function getBuildCommand(sketchFile = './sketch.ino') {
-	' -verbose ./sketch_nov16a.ino'
+	' -verbose ./sketch_nov16a.ino';
 	const argList = [];
 	argList.push(arduinoBuilderConstants.arduinoBuilder);
 	argList.push('-compile');
@@ -38323,19 +38373,6 @@ function getBuildCommand(sketchFile = './sketch.ino') {
 	argList.push('-verbose');
 	argList.push(sketchFile);
 	return argList.join(' ');
-}
-
-function wait(time = 1000) {
-	return new Promise((resolve, reject) => {
-		try {
-			const timeout = setTimeout(() => {
-				clearTimeout(timeout);
-				resolve();
-			}, time);
-		} catch (error) {
-			reject(error);
-		}
-	});
 }
 
 function openServer(defaultResponse = {}) {
@@ -38371,6 +38408,19 @@ function closeServer(
 	});
 }
 
+function wait(time = 1000) {
+	return new Promise((resolve, reject) => {
+		try {
+			const timeout = setTimeout(() => {
+				clearTimeout(timeout);
+				resolve();
+			}, time);
+		} catch (error) {
+			reject(error);
+		}
+	});
+}
+
 (async function () {
 	try {
 		const input = core.getInput('input');
@@ -38380,12 +38430,8 @@ function closeServer(
 		const time = new Date().toTimeString();
 		const { server, tunnel } = await openServer({ time });
 		console.log(tunnel.url);
-		await wait(3000);
-		const file = './file.txt';
-		await fs.outputFile(file, 'hello!');
-		const data = await fs.readFile(file, 'utf8');
-		console.log(data);
-		await fs.remove(file);
+		const result = await build();
+		console.log(result);
 		await closeServer(server, tunnel);
 		core.setOutput('time', time);
 		console.log('CLOSED');

@@ -7,7 +7,7 @@ jobs:
     steps:
       - name: Hello world action step
         id: hello
-        uses: potaesm/github-actions-node-mcu-cd@1.0.8
+        uses: potaesm/github-actions-node-mcu-cd@1.0.9
         with:
           input: 'Mona the Octocat'
       # Use the output from the `hello` step

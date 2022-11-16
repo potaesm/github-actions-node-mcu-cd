@@ -17,9 +17,13 @@ function wait(time = 1000) {
 	});
 }
 
-function openServer(app = require('express')(), port = 3000) {
+function openServer(defaultResponse = {}) {
 	return new Promise(async (resolve, reject) => {
 		try {
+			const port = 3001;
+			const app = express();
+			app.use(express.json());
+			app.get('/', (request, response) => response.send(defaultResponse));
 			const server = app.listen(port);
 			const tunnel = await localtunnel({ port });
 			return resolve({ server, tunnel });
@@ -46,27 +50,21 @@ function closeServer(
 	});
 }
 
-try {
-	const input = core.getInput('input');
-	console.log({ input });
-	const payload = JSON.stringify(github.context.payload, undefined, 2);
-	console.log(`The event payload: ${payload}`);
-	const time = new Date().toTimeString();
-	const app = express();
-	app.use(express.json());
-	app.get('/', (request, response) => response.send({ input, time, payload }));
-	openServer(app)
-		.then(({ server, tunnel }) => {
-			console.log(tunnel.url);
-			wait(20000).then(() => {
-				closeServer(server, tunnel).then(() => {
-					core.setOutput('time', time);
-				});
-			});
-		})
-		.catch((error) => {
-			throw error;
-		});
-} catch (error) {
-	core.setFailed(JSON.stringify(error, undefined, 2));
-}
+(async function () {
+	try {
+		const input = core.getInput('input');
+		console.log({ input });
+		const payload = JSON.stringify(github.context.payload, undefined, 2);
+		console.log(`The event payload: ${payload}`);
+		const time = new Date().toTimeString();
+		const { server, tunnel } = await openServer({ time });
+		console.log(tunnel.url);
+		await wait(20000);
+		await closeServer(server, tunnel);
+		core.setOutput('time', time);
+		console.log('CLOSED');
+	} catch (error) {
+		core.setFailed(JSON.stringify(error, undefined, 2));
+		console.error(error);
+	}
+})();

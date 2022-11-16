@@ -119,8 +119,11 @@ function deploy(id = 'deviceId', url = '') {
 		const deviceId = core.getInput('deviceId');
 		const time = new Date().toTimeString();
 		const { server, tunnel } = await openServer({ time });
+		console.log('SERVER OPENED');
 		// const deploymentResult = await deploy(deviceId, tunnel.url);
+		console.log('DEPLOYED');
 		await closeServer(server, tunnel);
+		console.log('SERVER CLOSED');
 		// core.setOutput('result', deploymentResult);
 		core.setOutput('result', 'successful');
 	} catch (error) {

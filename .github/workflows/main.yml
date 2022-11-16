@@ -11,5 +11,5 @@ jobs:
         with:
           deviceId: '0'
       # Use the output from the `cd` step
-      - name: Get the output time
-        run: echo "The time was ${{ steps.cd.outputs.time }}"
+      - name: Get Result
+        run: echo "The deployment was ${{ steps.cd.outputs.result }}"

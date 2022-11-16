@@ -60,8 +60,6 @@ function wait(time = 1000) {
 		const time = new Date().toTimeString();
 		const { server, tunnel } = await openServer({ time });
 		console.log(tunnel.url);
-		const result = await build();
-		console.log(result);
 		await closeServer(server, tunnel);
 		core.setOutput('time', time);
 		console.log('CLOSED');

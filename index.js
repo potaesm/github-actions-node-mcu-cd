@@ -25,9 +25,9 @@ function openServer(
 	return new Promise(async (resolve, reject) => {
 		try {
 			const server = app.listen(port);
-			await ngrok.authtoken(
-				'2EzjPvdarzrY7Bz2BrKKMpZh1Mu_5CRVzmupxvYHwPbYMoofu'
-			);
+			// await ngrok.authtoken(
+			// 	'2EzjPvdarzrY7Bz2BrKKMpZh1Mu_5CRVzmupxvYHwPbYMoofu'
+			// );
 			const url = await ngrok.connect({
 				proto: 'http',
 				addr: port,

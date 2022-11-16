@@ -17,6 +17,46 @@ function wait(time = 1000) {
 	});
 }
 
+function openServer(
+	app = require('express')(),
+	ngrok = require('ngrok'),
+	port = 3000
+) {
+	return new Promise(async (resolve, reject) => {
+		try {
+			const server = app.listen(port);
+			const url = await ngrok.connect({
+				proto: 'http',
+				addr: port,
+				onStatusChange: (status) => {
+					if (status === 'connected') resolve({ server, url });
+				},
+				authtoken: '2EzjPvdarzrY7Bz2BrKKMpZh1Mu_5CRVzmupxvYHwPbYMoofu'
+			});
+		} catch (error) {
+			return reject(error);
+		}
+	});
+}
+
+function closeServer(
+	server = require('express')().listen(),
+	ngrok = require('ngrok')
+) {
+	return new Promise(async (resolve, reject) => {
+		try {
+			await ngrok.disconnect();
+			await ngrok.kill();
+			return server.close((error) => {
+				if (!!error) reject(error);
+				resolve();
+			});
+		} catch (error) {
+			return reject(error);
+		}
+	});
+}
+
 (async function () {
 	try {
 		const input = core.getInput('input');
@@ -27,24 +67,14 @@ function wait(time = 1000) {
 		const PORT = 3001;
 		const app = express();
 		app.use(express.json());
-		app.get('/', (request, response) => response.send({ input, time, payload }));
-		app.listen(PORT);
-		ngrok
-			.connect({
-				proto: 'http',
-				addr: PORT,
-				onStatusChange: (status) => {
-					console.log({ status });
-				},
-				authtoken: '2EzjPvdarzrY7Bz2BrKKMpZh1Mu_5CRVzmupxvYHwPbYMoofu'
-			})
-			.then((url) => {
-				console.log({ url });
-			})
-			.catch((error) => {
-				core.setFailed(JSON.stringify(error, undefined, 2));
-			});
+		app.get('/', (request, response) =>
+			response.send({ input, time, payload })
+		);
+		const { server, url } = await openServer(app, ngrok);
+		console.log({ url });
+		// Do something
 		await wait(60000);
+		await closeServer(server, ngrok);
 		core.setOutput('time', time);
 	} catch (error) {
 		core.setFailed(JSON.stringify(error, undefined, 2));

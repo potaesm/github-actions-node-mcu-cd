@@ -3,15 +3,13 @@ on: [push]
 jobs:
   hello_world_job:
     runs-on: ubuntu-latest
-    name: Node MCU Deploy
+    name: Node MCU CD
     steps:
-      - name: checking out repo
-        uses: actions/checkout@v2
-      - name: build and deploy
+      - name: Deploy
         id: cd
         uses: potaesm/github-actions-node-mcu-cd@1.1.4
         with:
-          input: ${{ github.workspace }}
-      # Use the output from the `hello` step
+          deviceId: '0'
+      # Use the output from the `cd` step
       - name: Get the output time
         run: echo "The time was ${{ steps.cd.outputs.time }}"

@@ -2,28 +2,22 @@
 
 [Node MCU CD for GitHub Actions using MQTT](https://github.com/potaesm/github-actions-node-mcu-cd)
 
-# Usage
-
-# Hello world javascript action
-
-This action prints "Hello World" or "Hello" + the name of a person to greet to the log.
-
 ## Inputs
 
-### `who-to-greet`
+### `deviceId`
 
-**Required** The name of the person to greet. Default `"World"`.
+**Required** To be deployed device id. Default `"0"`.
 
 ## Outputs
 
-### `time`
+### `result`
 
-The time we greeted you.
+Deployment result.
 
 ## Example usage
 
 ```yaml
-uses: actions/hello-world-javascript-action@v1.1
+uses: potaesm/github-actions-node-mcu-cd@1.1.4
 with:
-  who-to-greet: 'Mona the Octocat'
+  deviceId: '0'
 ```

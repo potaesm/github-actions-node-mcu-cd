@@ -1,13 +1,13 @@
 name: 'Node MCU Continuous Deployment'
 description: 'Greet someone and record the time'
 inputs:
-  input: # id of input
-    description: 'Who to greet'
+  deviceId:
+    description: 'To be deployed device id'
     required: true
-    default: 'World'
+    default: '0'
 outputs:
-  time: # id of output
-    description: 'The time we greeted you'
+  result:
+    description: 'Deployment result'
 runs:
   using: 'node16'
   main: 'dist/index.js'

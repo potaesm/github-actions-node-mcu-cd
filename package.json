@@ -25,6 +25,7 @@
     "@actions/github": "^5.1.1",
     "express": "^4.18.2",
     "fs-extra": "^10.1.0",
-    "localtunnel": "^2.0.2"
+    "localtunnel": "^2.0.2",
+    "mqtt": "^4.3.7"
   }
 }

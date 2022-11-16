@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "push": "ncc build index.js --license licenses.txt && git add -A && git commit -m \"UPDATE\" && git push"
+    "push": "node build.js && ncc build index.js --license licenses.txt && git add -A && git commit -m \"UPDATE\" && git push"
   },
   "repository": {
     "type": "git",

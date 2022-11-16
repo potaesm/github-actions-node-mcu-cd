@@ -32,6 +32,7 @@ function closeServer(
 			return server.close((error) => {
 				if (!!error) subscriber.error(error);
 				subscriber.next();
+				subscriber.complete();
 			});
 		} catch (error) {
 			return subscriber.error(error);
@@ -39,7 +40,7 @@ function closeServer(
 	});
 }
 
-function deploy(id = 'deviceId', url = '') {
+function deploy(id = 'deviceId', url = '', mqttConfig = {}) {
 	return new Observable((subscriber) => {
 		try {
 			const commit = github.context.payload.head_commit?.id;
@@ -48,19 +49,6 @@ function deploy(id = 'deviceId', url = '') {
 				clearTimeout(timeout);
 				subscriber.error('timeout');
 			}, 120000);
-			const mqttConfig = {
-				url: 'mqtt://puffin.rmq2.cloudamqp.com',
-				options: {
-					username: 'gwbvwhzr:gwbvwhzr',
-					password: 'BH4UyDm74GHbzdsYJOFtvZL7LTIM_bNB'
-				},
-				topic: 'main/update',
-				defaultStageMessage: {
-					DOWNLOADED: 'DOWNLOADED',
-					UPDATED: 'UPDATED',
-					RESTARTED: 'RESTARTED'
-				}
-			};
 			const client = mqtt.connect(mqttConfig.url, mqttConfig.options);
 			client.on('connect', function () {
 				client.subscribe(mqttConfig.topic, function (error) {
@@ -88,6 +76,7 @@ function deploy(id = 'deviceId', url = '') {
 						client.end();
 						if (isLatestCommitId) {
 							subscriber.next('SUCCESSFUL');
+							subscriber.complete();
 						} else {
 							subscriber.error('UNSUCCESSFUL');
 						}
@@ -115,7 +104,20 @@ function handleError(error = new Error()) {
 			.pipe(
 				mergeMap(({ server, tunnel }) => {
 					console.log('SERVER OPENED');
-					return deploy(deviceId, tunnel.url).pipe(
+					const mqttConfig = {
+						url: 'mqtt://puffin.rmq2.cloudamqp.com',
+						options: {
+							username: 'gwbvwhzr:gwbvwhzr',
+							password: 'BH4UyDm74GHbzdsYJOFtvZL7LTIM_bNB'
+						},
+						topic: 'main/update',
+						defaultStageMessage: {
+							DOWNLOADED: 'DOWNLOADED',
+							UPDATED: 'UPDATED',
+							RESTARTED: 'RESTARTED'
+						}
+					};
+					return deploy(deviceId, tunnel.url, mqttConfig).pipe(
 						map((stage) => [{ server, tunnel }, stage])
 					);
 				}),

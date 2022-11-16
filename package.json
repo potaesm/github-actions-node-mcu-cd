@@ -4,7 +4,8 @@
   "description": "Node MCU Continuous Deployment via MQTT",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "push": "ncc build index.js --license licenses.txt && git add -A && git commit -m \"UPDATE\" && git push"
   },
   "repository": {
     "type": "git",

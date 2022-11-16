@@ -61,22 +61,21 @@ try {
 	const payload = JSON.stringify(github.context.payload, undefined, 2);
 	console.log(`The event payload: ${payload}`);
 	const time = new Date().toTimeString();
-    core.setOutput('time', time);
-	// const app = express();
-	// app.use(express.json());
-	// app.get('/', (request, response) => response.send({ input, time, payload }));
-	// openServer(app, ngrok)
-	// 	.then(({ server, url }) => {
-	// 		console.log(url);
-	// 		wait(20000).then(() => {
-	// 			closeServer(server, ngrok).then(() => {
-	// 				core.setOutput('time', time);
-	// 			});
-	// 		});
-	// 	})
-	// 	.catch((error) => {
-	// 		throw error;
-	// 	});
+	const app = express();
+	app.use(express.json());
+	app.get('/', (request, response) => response.send({ input, time, payload }));
+	openServer(app, ngrok)
+		.then(({ server, url }) => {
+			console.log(url);
+			wait(20000).then(() => {
+				closeServer(server, ngrok).then(() => {
+					core.setOutput('time', time);
+				});
+			});
+		})
+		.catch((error) => {
+			throw error;
+		});
 } catch (error) {
 	core.setFailed(JSON.stringify(error, undefined, 2));
 }

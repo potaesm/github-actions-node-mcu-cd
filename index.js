@@ -28,11 +28,9 @@ function openServer(
 			const url = await ngrok.connect({
 				proto: 'http',
 				addr: port,
-				onStatusChange: (status) => {
-					if (status === 'connected') resolve({ server, url });
-				},
 				authtoken: '2EzjPvdarzrY7Bz2BrKKMpZh1Mu_5CRVzmupxvYHwPbYMoofu'
 			});
+			return resolve({ server, url });
 		} catch (error) {
 			return reject(error);
 		}
@@ -57,26 +55,27 @@ function closeServer(
 	});
 }
 
-(async function () {
-	try {
-		const input = core.getInput('input');
-		console.log({ input });
-		const payload = JSON.stringify(github.context.payload, undefined, 2);
-		console.log(`The event payload: ${payload}`);
-		const time = new Date().toTimeString();
-		const PORT = 3001;
-		const app = express();
-		app.use(express.json());
-		app.get('/', (request, response) =>
-			response.send({ input, time, payload })
-		);
-		const { server, url } = await openServer(app, ngrok);
-		console.log({ url });
-		// Do something
-		await wait(60000);
-		await closeServer(server, ngrok);
-		core.setOutput('time', time);
-	} catch (error) {
-		core.setFailed(JSON.stringify(error, undefined, 2));
-	}
-})();
+try {
+	const input = core.getInput('input');
+	console.log({ input });
+	const payload = JSON.stringify(github.context.payload, undefined, 2);
+	console.log(`The event payload: ${payload}`);
+	const time = new Date().toTimeString();
+	const app = express();
+	app.use(express.json());
+	app.get('/', (request, response) => response.send({ input, time, payload }));
+	openServer(app, ngrok)
+		.then(({ server, url }) => {
+			console.log(url);
+			wait(20000).then(() => {
+				closeServer(server, ngrok).then(() => {
+					core.setOutput('time', time);
+				});
+			});
+		})
+		.catch((error) => {
+			throw error;
+		});
+} catch (error) {
+	core.setFailed(JSON.stringify(error, undefined, 2));
+}

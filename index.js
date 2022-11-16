@@ -20,7 +20,7 @@ function run(command) {
 	});
 }
 
-function build() {
+function build(githubWorkspace = '.') {
 	return new Promise(async (resolve, reject) => {
 		try {
 			const buildPathExistsPromise = fs.pathExists(
@@ -39,7 +39,7 @@ function build() {
 			if (!buildCacheExists) {
 				fs.mkdir(arduinoBuilderConstants.buildCache, { recursive: true });
 			}
-			const buildResult = await run(getBuildCommand());
+			const buildResult = await run(getBuildCommand(githubWorkspace));
 			return buildResult;
 		} catch (error) {
 			return reject(error);
@@ -71,28 +71,43 @@ const arduinoBuilderConstants = {
 	inputFile: './sketch.ino'
 };
 
-function getBuildCommand(sketchFile = './sketch.ino') {
-	' -verbose ./sketch_nov16a.ino';
+function getBuildCommand(githubWorkspace = '.', sketchFile = './sketch.ino') {
+	githubWorkspace = githubWorkspace + '/';
 	const argList = [];
-	argList.push(arduinoBuilderConstants.arduinoBuilder);
+	argList.push(
+		arduinoBuilderConstants.arduinoBuilder.replace('./', githubWorkspace)
+	);
 	argList.push('-compile');
 	argList.push('-logger=machine');
 	argList.push('-hardware');
-	argList.push(arduinoBuilderConstants.hardware);
+	argList.push(arduinoBuilderConstants.hardware.replace('./', githubWorkspace));
 	argList.push('-tools');
-	argList.push(arduinoBuilderConstants.toolsBuilder);
+	argList.push(
+		arduinoBuilderConstants.toolsBuilder.replace('./', githubWorkspace)
+	);
 	argList.push('-built-in-libraries');
-	argList.push(arduinoBuilderConstants.builtInLibraries);
+	argList.push(
+		arduinoBuilderConstants.builtInLibraries.replace('./', githubWorkspace)
+	);
 	argList.push('-libraries');
-	argList.push(arduinoBuilderConstants.libraries);
+	argList.push(
+		arduinoBuilderConstants.libraries.replace('./', githubWorkspace)
+	);
 	argList.push(`-fqbn=${arduinoBuilderConstants.fqbn}`);
 	argList.push(`-ide-version=${arduinoBuilderConstants.ideVersion}`);
 	argList.push('-build-path');
-	argList.push(arduinoBuilderConstants.buildPath);
+	argList.push(
+		arduinoBuilderConstants.buildPath.replace('./', githubWorkspace)
+	);
 	argList.push('-warnings=none');
 	argList.push('-build-cache');
-	argList.push(arduinoBuilderConstants.buildCache);
-	for (const item of arduinoBuilderConstants.prefs) {
+	argList.push(
+		arduinoBuilderConstants.buildCache.replace('./', githubWorkspace)
+	);
+	for (const item of arduinoBuilderConstants.prefs.replace(
+		'./',
+		githubWorkspace
+	)) {
 		argList.push(`-prefs=${item}`);
 	}
 	argList.push('-verbose');
@@ -148,14 +163,14 @@ function wait(time = 1000) {
 
 (async function () {
 	try {
-		const input = core.getInput('input');
-		console.log({ input });
-		const payload = JSON.stringify(github.context.payload, undefined, 2);
-		console.log(`The event payload: ${payload}`);
+		const githubWorkspace = core.getInput('githubWorkspace');
+		console.log({ githubWorkspace });
+		// const payload = JSON.stringify(github.context.payload, undefined, 2);
+		// console.log(`The event payload: ${payload}`);
 		const time = new Date().toTimeString();
 		const { server, tunnel } = await openServer({ time });
 		console.log(tunnel.url);
-		const result = await build();
+		const result = await build(githubWorkspace);
 		console.log(result);
 		await closeServer(server, tunnel);
 		core.setOutput('time', time);

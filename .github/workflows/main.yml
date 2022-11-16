@@ -3,13 +3,15 @@ on: [push]
 jobs:
   hello_world_job:
     runs-on: ubuntu-latest
-    name: A job to say hello
+    name: Node MCU Deploy
     steps:
-      - name: Hello world action step
-        id: hello
-        uses: potaesm/github-actions-node-mcu-cd@1.1.1
+      - name: checking out repo
+        uses: actions/checkout@v2
+      - name: build and deploy
+        id: cd
+        uses: potaesm/github-actions-node-mcu-cd@1.1.2
         with:
-          input: 'Mona the Octocat'
+          githubWorkspace: ${{ github.workspace }}
       # Use the output from the `hello` step
       - name: Get the output time
-        run: echo "The time was ${{ steps.hello.outputs.time }}"
+        run: echo "The time was ${{ steps.cd.outputs.time }}"

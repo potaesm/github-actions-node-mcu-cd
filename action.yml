@@ -1,4 +1,4 @@
-name: 'Hello World'
+name: 'Node MCU Continuous Deployment'
 description: 'Greet someone and record the time'
 inputs:
   input: # id of input

@@ -30,7 +30,9 @@ function openServer(
 			);
 			const url = await ngrok.connect({
 				proto: 'http',
-				addr: port
+				addr: port,
+                // authtoken: '2EzjPvdarzrY7Bz2BrKKMpZh1Mu_5CRVzmupxvYHwPbYMoofu', 
+                configPath: './ngrok.yml'
 			});
 			return resolve({ server, url });
 		} catch (error) {
@@ -71,7 +73,7 @@ try {
 			console.log(url);
 			wait(20000).then(() => {
 				closeServer(server, ngrok).then(() => {
-					core.setOutput('time', time);
+					// core.setOutput('time', time);
 				});
 			});
 		})
@@ -79,5 +81,5 @@ try {
 			throw error;
 		});
 } catch (error) {
-	core.setFailed(JSON.stringify(error, undefined, 2));
+	// core.setFailed(JSON.stringify(error, undefined, 2));
 }

@@ -68655,8 +68655,8 @@ function startDeployment(deployOptions, monitorStage = (stage = '') => {}) {
 		try {
 			deployBinary(deployOptions).subscribe({
 				next: monitorStage,
-				error: (error) => reject(error),
-				complete: () => resolve()
+				error: (error) => resolve(error.message),
+				complete: () => resolve(STAGE.UPDATED)
 			});
 		} catch (error) {
 			return reject(error);
@@ -68665,7 +68665,7 @@ function startDeployment(deployOptions, monitorStage = (stage = '') => {}) {
 }
 
 function monitorStage(stage = '') {
-	console.log({ stage });
+	console.log('Deployment Stage: ', stage);
 }
 
 (async function () {
@@ -68680,9 +68680,7 @@ function monitorStage(stage = '') {
 		await closeFileServer(server, tunnel);
 		return core.setOutput('result', STAGE.UPDATED);
 	} catch (error) {
-		console.error(error);
-		// return core.setFailed(error);
-		return core.setOutput('result', error.message);
+		return core.setFailed(error);
 	}
 })();
 

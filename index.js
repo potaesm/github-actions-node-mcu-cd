@@ -90,7 +90,7 @@ function deployBinary(deployOptions = { deviceId: '', commitId: '', binUrl: '', 
 							subscriber.next(STAGE.UPDATED);
 							subscriber.complete();
 						} else {
-							subscriber.error(STAGE.UPDATE_FAILED);
+							subscriber.error(new Error(STAGE.UPDATE_FAILED));
 						}
 					} else {
 						subscriber.next(stage);
@@ -134,6 +134,6 @@ function monitorStage(stage = '') {
 		return core.setOutput('result', STAGE.UPDATED);
 	} catch (error) {
 		console.error(error);
-		return core.setFailed(`${error}`);
+		return core.setFailed(error);
 	}
 })();

@@ -68681,13 +68681,13 @@ function monitorStage(stage = '') {
 		TUNNEL = tunnel;
 		await startDeployment({ deviceId, commitId, binUrl: tunnel.url, mqttConfig }, monitorStage);
 		await closeFileServer(SERVER, SERVER);
-		core.setOutput('result', STAGE.UPDATED);
+		return core.setOutput('result', STAGE.UPDATED);
 	} catch (error) {
 		console.error(error);
 		if (!!SERVER && !!TUNNEL) {
 			await closeFileServer(SERVER, SERVER);
 		}
-		core.setFailed(error);
+		return core.setFailed(`${error}`);
 	}
 })();
 

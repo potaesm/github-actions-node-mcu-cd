@@ -10,6 +10,7 @@ jobs:
       - name: Compile .ino
         uses: ArminJo/arduino-test-compile@v3
         with:
+          sketch-names: sketch.ino
           sketch-names-find-start: ${{ github.workspace }}/Sketches/
           arduino-board-fqbn: esp8266:esp8266:nodemcuv2
           platform-default-url: http://arduino.esp8266.com/stable/package_esp8266com_index.json

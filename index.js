@@ -140,6 +140,6 @@ function monitorStage(stage = '') {
 		if (!!SERVER && !!TUNNEL) {
 			await closeFileServer(SERVER, SERVER);
 		}
-		core.setFailed(JSON.stringify(error, undefined, 2));
+		core.setFailed(error);
 	}
 })();

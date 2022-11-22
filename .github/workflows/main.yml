@@ -17,7 +17,7 @@ jobs:
           set-build-path: true
       - name: Binary Lookup
         run: |
-          cd Sketches
+          cd /home/runner/sketch/build/
           ls -la
       # - name: Install Arduino ClI
       #   run: |

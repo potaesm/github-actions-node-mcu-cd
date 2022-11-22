@@ -16,7 +16,7 @@ jobs:
           set-build-path: true
           debug-compile: true
       - name: Binary Lookup
-        runs: |
+        run: |
           ls -la
       # - name: Install Arduino ClI
       #   run: |

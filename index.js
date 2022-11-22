@@ -134,6 +134,7 @@ function monitorStage(stage = '') {
 		return core.setOutput('result', STAGE.UPDATED);
 	} catch (error) {
 		console.error(error);
-		return core.setFailed(error);
+		// return core.setFailed(error);
+		return core.setOutput('result', error.message);
 	}
 })();

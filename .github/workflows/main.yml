@@ -5,8 +5,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Node MCU CD
     steps:
-      # - name: Check out repo
-      #   uses: actions/checkout@v2.5.0
+      - name: Check out repo
+        uses: actions/checkout@v2.5.0
       - name: Compile .ino
         uses: ArminJo/arduino-test-compile@v3
         with:

@@ -3,7 +3,7 @@ on: [push]
 jobs:
   hello_world_job:
     runs-on: ubuntu-latest
-    name: Node MCU CD
+    name: Node MCU Build & Deploy
     steps:
       - name: Check out repo
         uses: actions/checkout@v2.5.0
@@ -19,6 +19,13 @@ jobs:
         run: |
           cd /home/runner/sketch/build/
           ls -la
+      - name: Deploy
+        id: deployment
+        uses: potaesm/github-actions-node-mcu-cd@v1.0.1
+        with:
+          deviceId: 'SSS'
+      - name: Get Result
+        run: echo "The deployment was ${{ steps.deployment.outputs.result }}"
       # - name: Install Arduino ClI
       #   run: |
       #     curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh -s 0.9.0
@@ -27,11 +34,3 @@ jobs:
       #     ./bin/arduino-cli core install esp8266:esp8266
       #     ./bin/arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 ${{ github.workspace }}/sketch.ino --output sketch.bin -v
       #     ls -la
-      # - name: Deploy
-      #   id: cd
-      #   uses: potaesm/github-actions-node-mcu-cd@1.1.4
-      #   with:
-      #     deviceId: '0'
-      # # Use the output from the `cd` step
-      # - name: Get Result
-      #   run: echo "The deployment was ${{ steps.cd.outputs.result }}"

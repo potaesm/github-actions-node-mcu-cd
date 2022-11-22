@@ -1,10 +1,14 @@
-name: 'Node MCU Continuous Deployment'
-description: 'Greet someone and record the time'
+name: 'Arduino Continuous Deployment'
+description: 'OTA Update via MQTT and HTTP for Arduino'
 inputs:
   deviceId:
     description: 'To be deployed device id'
     required: true
     default: '0'
+  binaryPath:
+    description: 'Path to binary file'
+    required: false
+    default: '/home/runner/sketch/build/'
 outputs:
   result:
     description: 'Deployment result'

@@ -5,8 +5,8 @@ inputs:
     description: 'To be deployed device id'
     required: true
     default: '0'
-  binaryPath:
-    description: 'Path to binary file'
+  binaryBuildPath:
+    description: 'Path to binary build folder'
     required: false
     default: '/home/runner/sketch/build/'
 outputs:

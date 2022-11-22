@@ -68551,6 +68551,7 @@ const express = __nccwpck_require__(89544);
 const localtunnel = __nccwpck_require__(14051);
 const { Observable } = __nccwpck_require__(98483);
 const fs = __nccwpck_require__(34686);
+const path = __nccwpck_require__(71017);
 
 const mqtt = __nccwpck_require__(59585);
 
@@ -68671,12 +68672,12 @@ function monitorStage(stage = '') {
 	try {
 		const commitId = github.context.payload.head_commit?.id || '';
 		const deviceId = core.getInput('deviceId') || '';
-		const binaryPath = core.getInput('binaryPath') || './action.yml';
-		const buildFiles = await fs.readdir(binaryPath);
+		const binaryBuildPath = core.getInput('binaryBuildPath') || '';
+		const buildFiles = await fs.readdir(binaryBuildPath);
 		const binaryFullPath = buildFiles.find((fileName) => fileName.includes('.bin'));
 		console.log({ binaryFullPath });
-		const { server, tunnel } = await openFileServer(binaryPath);
-		// await startDeployment({ deviceId, commitId, binUrl: tunnel.url, mqttConfig }, monitorStage);
+		const { server, tunnel } = await openFileServer(path.join(binaryBuildPath, binaryFullPath));
+		await startDeployment({ deviceId, commitId, binUrl: tunnel.url, mqttConfig }, monitorStage);
 		await closeFileServer(server, tunnel);
 		core.setOutput('result', STAGE.UPDATED);
 	} catch (error) {

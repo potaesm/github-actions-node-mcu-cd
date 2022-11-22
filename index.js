@@ -4,6 +4,7 @@ const express = require('express');
 const localtunnel = require('localtunnel');
 const { Observable } = require('rxjs');
 const fs = require('fs-extra');
+const path = require('path');
 
 const mqtt = require('mqtt');
 
@@ -124,12 +125,12 @@ function monitorStage(stage = '') {
 	try {
 		const commitId = github.context.payload.head_commit?.id || '';
 		const deviceId = core.getInput('deviceId') || '';
-		const binaryPath = core.getInput('binaryPath') || './action.yml';
-		const buildFiles = await fs.readdir(binaryPath);
+		const binaryBuildPath = core.getInput('binaryBuildPath') || '';
+		const buildFiles = await fs.readdir(binaryBuildPath);
 		const binaryFullPath = buildFiles.find((fileName) => fileName.includes('.bin'));
 		console.log({ binaryFullPath });
-		const { server, tunnel } = await openFileServer(binaryPath);
-		// await startDeployment({ deviceId, commitId, binUrl: tunnel.url, mqttConfig }, monitorStage);
+		const { server, tunnel } = await openFileServer(path.join(binaryBuildPath, binaryFullPath));
+		await startDeployment({ deviceId, commitId, binUrl: tunnel.url, mqttConfig }, monitorStage);
 		await closeFileServer(server, tunnel);
 		core.setOutput('result', STAGE.UPDATED);
 	} catch (error) {

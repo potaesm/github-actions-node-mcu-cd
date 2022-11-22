@@ -122,7 +122,6 @@ function monitorStage(stage = '') {
 }
 
 (async function () {
-	let SERVER, TUNNEL;
 	try {
 		const commitId = github.context.payload.head_commit?.id || '';
 		const deviceId = core.getInput('deviceId') || '';
@@ -130,16 +129,11 @@ function monitorStage(stage = '') {
 		const buildFiles = await fs.readdir(binaryBuildPath);
 		const binaryFullPath = buildFiles.find((fileName) => fileName.includes('.bin'));
 		const { server, tunnel } = await openFileServer(path.join(binaryBuildPath, binaryFullPath));
-		SERVER = server;
-		TUNNEL = tunnel;
 		await startDeployment({ deviceId, commitId, binUrl: tunnel.url, mqttConfig }, monitorStage);
-		await closeFileServer(SERVER, SERVER);
+		await closeFileServer(server, tunnel);
 		return core.setOutput('result', STAGE.UPDATED);
 	} catch (error) {
 		console.error(error);
-		if (!!SERVER && !!TUNNEL) {
-			await closeFileServer(SERVER, SERVER);
-		}
 		return core.setFailed(`${error}`);
 	}
 })();

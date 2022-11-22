@@ -21,7 +21,7 @@ jobs:
           ls -la
       - name: Deploy
         id: deployment
-        uses: potaesm/github-actions-node-mcu-cd@v1.0.5
+        uses: potaesm/github-actions-node-mcu-cd@v1.0.6
         with:
           deviceId: 'SSS'
       - name: Get Result

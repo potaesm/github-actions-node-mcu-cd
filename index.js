@@ -108,8 +108,8 @@ function startDeployment(deployOptions, monitorStage = (stage = '') => {}) {
 		try {
 			deployBinary(deployOptions).subscribe({
 				next: monitorStage,
-				error: (error) => reject(error),
-				complete: () => resolve()
+				error: (error) => resolve(error.message),
+				complete: () => resolve(STAGE.UPDATED)
 			});
 		} catch (error) {
 			return reject(error);
@@ -129,9 +129,9 @@ function monitorStage(stage = '') {
 		const buildFiles = await fs.readdir(binaryBuildPath);
 		const binaryFullPath = buildFiles.find((fileName) => fileName.includes('.bin'));
 		const { server, tunnel } = await openFileServer(path.join(binaryBuildPath, binaryFullPath));
-		await startDeployment({ deviceId, commitId, binUrl: tunnel.url, mqttConfig }, monitorStage);
+		const result = await startDeployment({ deviceId, commitId, binUrl: tunnel.url, mqttConfig }, monitorStage);
 		await closeFileServer(server, tunnel);
-		return core.setOutput('result', STAGE.UPDATED);
+		return core.setOutput('result', result);
 	} catch (error) {
 		return core.setFailed(error);
 	}

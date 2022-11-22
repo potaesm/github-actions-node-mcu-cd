@@ -108,8 +108,8 @@ function startDeployment(deployOptions, monitorStage = (stage = '') => {}) {
 		try {
 			deployBinary(deployOptions).subscribe({
 				next: monitorStage,
-				error: (error) => resolve(error.message),
-				complete: () => resolve(STAGE.UPDATED)
+				error: (error) => reject(error),
+				complete: () => resolve()
 			});
 		} catch (error) {
 			return reject(error);

@@ -2,17 +2,43 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 const express = require('express');
 const localtunnel = require('localtunnel');
+const { Observable } = require('rxjs');
+
 const mqtt = require('mqtt');
 
-function openServer(defaultResponse = {}) {
+const STAGE = {
+	BIN_URL_SENT: 'BIN_URL_SENT',
+	BIN_URL_RECEIVED: 'BIN_URL_RECEIVED',
+	BIN_DOWNLOADING: 'BIN_DOWNLOADING',
+	BIN_DOWNLOADED: 'BIN_DOWNLOADED',
+	BIN_DOWNLOAD_FAILED: 'BIN_DOWNLOAD_FAILED',
+	UPDATING: 'UPDATING',
+	UPDATED: 'UPDATED',
+	UPDATE_FAILED: 'UPDATE_FAILED',
+	RESTARTING: 'RESTARTING',
+	STARTED: 'STARTED',
+	TIMEOUT: 'TIMEOUT'
+};
+
+const mqttConfig = {
+	url: 'mqtt://puffin.rmq2.cloudamqp.com',
+	options: {
+		username: 'gwbvwhzr:gwbvwhzr',
+		password: 'BH4UyDm74GHbzdsYJOFtvZL7LTIM_bNB'
+	},
+	topic: 'main/update'
+};
+
+function openFileServer(binaryPath = '') {
 	return new Promise(async (resolve, reject) => {
 		try {
 			const port = 3001;
 			const app = express();
 			app.use(express.json());
-			app.get('/', (request, response) => response.send(defaultResponse));
+			app.get('/', (request, response) => response.download(binaryPath));
 			const server = app.listen(port);
 			const tunnel = await localtunnel({ port });
+			// const tunnel = { url: 'localhost' };
 			return resolve({ server, tunnel });
 		} catch (error) {
 			return reject(error);
@@ -20,10 +46,7 @@ function openServer(defaultResponse = {}) {
 	});
 }
 
-function closeServer(
-	server = require('express')().listen(),
-	tunnel = require('localtunnel')()
-) {
+function closeFileServer(server = require('express')().listen(), tunnel = require('localtunnel')()) {
 	return new Promise(async (resolve, reject) => {
 		try {
 			tunnel.close();
@@ -37,76 +60,54 @@ function closeServer(
 	});
 }
 
-function wait(time = 1000) {
-	return new Promise((resolve, reject) => {
+function deployBinary(deployOptions = { deviceId: '', commitId: '', binUrl: '', mqttConfig: {}, timeLimit: 0 }) {
+	return new Observable((subscriber) => {
 		try {
+			const { deviceId, commitId, binUrl, mqttConfig, timeLimit } = deployOptions;
 			const timeout = setTimeout(() => {
 				clearTimeout(timeout);
-				resolve();
-			}, time);
-		} catch (error) {
-			reject(error);
-		}
-	});
-}
-
-function deploy(id = 'deviceId', url = '') {
-	return new Promise((resolve, reject) => {
-		try {
-			const commit = github.context.payload.head_commit?.id;
-			// 2 minutes timeout
-			const timeout = setTimeout(() => {
-				clearTimeout(timeout);
-				reject('timeout');
-			}, 120000);
-			const mqttConfig = {
-				url: 'mqtt://puffin.rmq2.cloudamqp.com',
-				options: {
-					username: 'gwbvwhzr:gwbvwhzr',
-					password: 'BH4UyDm74GHbzdsYJOFtvZL7LTIM_bNB'
-				},
-				topic: 'main/update',
-				defaultStageMessage: {
-					DOWNLOADED: 'DOWNLOADED',
-					UPDATED: 'UPDATED',
-					RESTARTED: 'RESTARTED'
-				}
-			};
+				subscriber.error(STAGE.TIMEOUT);
+			}, timeLimit || 120000);
 			const client = mqtt.connect(mqttConfig.url, mqttConfig.options);
 			client.on('connect', function () {
 				client.subscribe(mqttConfig.topic, function (error) {
 					if (error) {
-						reject(error);
+						subscriber.error(error);
 					} else {
-						// Deploy message
-						client.publish(
-							mqttConfig.topic,
-							JSON.stringify({ id, commit, url })
-						);
+						client.publish(mqttConfig.topic, JSON.stringify({ id: deviceId, commit: commitId, url: binUrl.replace('https://', 'http://') }));
+						subscriber.next(STAGE.BIN_URL_SENT);
 					}
 				});
 			});
 			client.on('message', function (topic, message) {
-				const payload = JSON.parse(message.toString());
-				if (
-					topic === mqttConfig.topic &&
-					Object.values(mqttConfig.defaultStageMessage).includes(payload?.stage)
-				) {
-					const isRestarted =
-						payload?.stage === mqttConfig.defaultStageMessage.RESTARTED;
-					const isLatestCommitId = payload?.commit !== commit;
-					if (isRestarted) {
+				const { id, commit, stage } = JSON.parse(message.toString());
+				if (topic === mqttConfig.topic && id === deviceId && Object.values(STAGE).includes(stage)) {
+					if (stage === STAGE.STARTED) {
 						client.end();
-						if (isLatestCommitId) {
-							resolve('update successful');
+						if (commit === commitId) {
+							subscriber.next(STAGE.UPDATED);
+							subscriber.complete();
 						} else {
-							reject('update unsuccessful');
+							subscriber.error(STAGE.UPDATE_FAILED);
 						}
 					} else {
-						// Use observable will log each steps in details
-						console.log(payload?.stage);
+						subscriber.next(stage);
 					}
 				}
+			});
+		} catch (error) {
+			subscriber.error(error);
+		}
+	});
+}
+
+function startDeployment(deployOptions, monitorStage = (stage = '') => {}) {
+	return new Promise((resolve, reject) => {
+		try {
+			deployBinary(deployOptions).subscribe({
+				next: monitorStage,
+				error: (error) => reject(error),
+				complete: () => resolve()
 			});
 		} catch (error) {
 			return reject(error);
@@ -114,20 +115,21 @@ function deploy(id = 'deviceId', url = '') {
 	});
 }
 
+function monitorStage(stage = '') {
+	console.log({ stage });
+}
+
 (async function () {
 	try {
-		const deviceId = core.getInput('deviceId');
-		const time = new Date().toTimeString();
-		const { server, tunnel } = await openServer({ time });
-		console.log('SERVER OPENED');
-		// const deploymentResult = await deploy(deviceId, tunnel.url);
-		console.log('DEPLOYED');
-		await closeServer(server, tunnel);
-		console.log('SERVER CLOSED');
-		// core.setOutput('result', deploymentResult);
-		core.setOutput('result', 'successful');
+		const deviceId = core.getInput('deviceId') || '';
+		const binaryPath = core.getInput('binaryPath') || './action.yml';
+		const commitId = github.context.payload.head_commit?.id || '';
+		const { server, tunnel } = await openFileServer(binaryPath);
+		await startDeployment({ deviceId, commitId, binUrl: tunnel.url, mqttConfig }, monitorStage);
+		await closeFileServer(server, tunnel);
+		core.setOutput('result', STAGE.UPDATED);
 	} catch (error) {
-		core.setFailed(JSON.stringify(error, undefined, 2));
 		console.error(error);
+		core.setFailed(JSON.stringify(error, undefined, 2));
 	}
 })();

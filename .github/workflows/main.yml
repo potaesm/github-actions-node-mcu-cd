@@ -5,16 +5,27 @@ jobs:
     runs-on: ubuntu-latest
     name: Node MCU CD
     steps:
-      - name: checking out repo
-        uses: actions/checkout@v2
-      - name: Install Arduino ClI
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh -s 0.9.0
-          ./bin/arduino-cli config init --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
-          ./bin/arduino-cli core update-index
-          ./bin/arduino-cli core install esp8266:esp8266
-          ./bin/arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 ${{ github.workspace }}/sketch.ino --output sketch.bin -v
+      # - name: checking out repo
+      #   uses: actions/checkout@v2
+      - name: Compile .ino
+        uses: ArminJo/arduino-test-compile@v3
+        with:
+          sketch-names: sketch.ino
+          arduino-board-fqbn: esp8266:esp8266:nodemcuv2
+          platform-default-url: http://arduino.esp8266.com/stable/package_esp8266com_index.json
+          set-build-path: true
+          debug-compile: true
+      - name: Binary Lookup
+        runs: |
           ls -la
+      # - name: Install Arduino ClI
+      #   run: |
+      #     curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh -s 0.9.0
+      #     ./bin/arduino-cli config init --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
+      #     ./bin/arduino-cli core update-index
+      #     ./bin/arduino-cli core install esp8266:esp8266
+      #     ./bin/arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 ${{ github.workspace }}/sketch.ino --output sketch.bin -v
+      #     ls -la
       # - name: Deploy
       #   id: cd
       #   uses: potaesm/github-actions-node-mcu-cd@1.1.4
